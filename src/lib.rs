@@ -31,14 +31,13 @@ pub struct MessageBody<Payload> {
 }
 
 #[async_trait::async_trait]
-pub trait Node<Item>
-where
-    Item: Send,
-{
+pub trait Node {
+    type Payload;
+
     async fn run(
         self,
-        rx: impl Stream<Item = Item> + Unpin + Send,
-        tx: UnboundedSender<Item>,
+        rx: impl Stream<Item = Message<Self::Payload>> + Unpin + Send,
+        tx: UnboundedSender<Message<Self::Payload>>,
     ) -> anyhow::Result<()>;
 
     async fn from_init(init: init::Init) -> anyhow::Result<Self>
@@ -71,7 +70,7 @@ where
 
 pub async fn run_node<N, Payload>() -> anyhow::Result<()>
 where
-    N: Node<Message<Payload>>,
+    N: Node<Payload = Payload>,
     Payload: Send + Serialize + DeserializeOwned + 'static,
 {
     let node = init::init_node::<N, Payload>().await?;

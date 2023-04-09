@@ -16,7 +16,9 @@ struct UniqueIdNode {
 }
 
 #[async_trait::async_trait]
-impl Node<Message<UniqueIdPayload>> for UniqueIdNode {
+impl Node for UniqueIdNode {
+    type Payload = UniqueIdPayload;
+
     async fn run(
         mut self,
         mut rx: impl Stream<Item = Message<UniqueIdPayload>> + Unpin + Send,

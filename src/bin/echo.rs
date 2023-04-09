@@ -16,7 +16,9 @@ struct EchoNode {
 }
 
 #[async_trait::async_trait]
-impl Node<Message<EchoPayload>> for EchoNode {
+impl Node for EchoNode {
+    type Payload = EchoPayload;
+
     async fn run(
         mut self,
         mut rx: impl Stream<Item = Message<EchoPayload>> + Unpin + Send,

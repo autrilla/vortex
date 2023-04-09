@@ -18,7 +18,7 @@ pub struct Init {
 
 pub(crate) async fn init_node<N, Payload>() -> anyhow::Result<N>
 where
-    N: Node<Message<Payload>>,
+    N: Node<Payload = Payload>,
     Payload: Send + Serialize + DeserializeOwned + 'static,
 {
     let init_message = {
