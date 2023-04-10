@@ -47,31 +47,33 @@ pub trait Node {
 
 fn stream_from_stdin<Payload>() -> impl Stream<Item = Message<Payload>>
 where
-    Payload: DeserializeOwned,
+    Payload: std::fmt::Debug + DeserializeOwned,
 {
     LinesStream::new(BufReader::new(tokio::io::stdin()).lines()).map(|line| {
         let line = line.context("reading from STDIN").unwrap();
-        eprintln!("{}", line);
-        serde_json::from_str::<Message<Payload>>(&line)
+        let m = serde_json::from_str::<Message<Payload>>(&line)
             .context("message parsing")
-            .unwrap()
+            .unwrap();
+        tracing::event!(tracing::Level::INFO, message = ?m, "Read message from STDIN");
+        m
     })
 }
 
 fn serialize_to_stdout<Payload>(m: Message<Payload>)
 where
-    Payload: Serialize,
+    Payload: Serialize + std::fmt::Debug,
 {
     println!(
         "{}",
         serde_json::to_string(&m).expect("serializing message failed")
     );
+    tracing::event!(tracing::Level::INFO, message = ?m, "Wrote message to STDOUT");
 }
 
 pub async fn run_node<N, Payload>() -> anyhow::Result<()>
 where
     N: Node<Payload = Payload>,
-    Payload: Send + Serialize + DeserializeOwned + 'static,
+    Payload: Send + Serialize + std::fmt::Debug + DeserializeOwned + 'static,
 {
     let node = init::init_node::<N, Payload>().await?;
     let (tx, mut rx) = mpsc::unbounded_channel::<Message<Payload>>();
